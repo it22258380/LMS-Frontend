@@ -11,40 +11,39 @@ interface Book {
   coverImageUrl: string;
 }
 
-async function getFeaturedBooks(): Promise<Book[]> {
-  // Use the environment variable for the base URL
-  const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
+// async function getFeaturedBooks(): Promise<Book[]> {
+//   // base URL
+//   const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
   
-  try {
-    const res = await fetch(`${API_URL}/api/books`, { 
-        next: { revalidate: 3600 } 
-    });
+//   try {
+//     const res = await fetch(`${API_URL}/books`, { 
+//         next: { revalidate: 3600 } 
+//     });
     
    
-    if (!res.ok) {
+//     if (!res.ok) {
        
-        console.error(`Failed to fetch featured books. Status: ${res.status}`);
-        return []; 
-    }
+//         console.error(`Failed to fetch featured books. Status: ${res.status}`);
+//         return []; 
+//     }
     
-    return res.json();
-  } catch (error) {
-    // This catches network errors (e.g., Spring Boot server is down)
-    console.error("Network or Fetch Error:", error);
-    return [];
-  }
-}
+//     return res.json();
+//   } catch (error) {
+//     console.error("Network or Fetch Error:", error);
+//     return [];
+//   }
+// }
 
 export default async function HomePage() {
-  const featuredBooks = await getFeaturedBooks();
+  //const featuredBooks = await getFeaturedBooks();
     
   return (
     <div className="min-h-screen bg-gray-50">
-        {/* Navbar is rendered first. It uses useAuth() inside */}
+       
         {/* <Navbar /> */}
 
         <main>
-            {/* The Hero section is crucial for role-based content */}
+           
             <HeroSection />
 
             {/* Featured Section (Universal) */}
@@ -52,7 +51,7 @@ export default async function HomePage() {
                 <h2 className="text-3xl font-semibold mb-8 text-gray-800 border-b pb-2">
                     🔥 Trending Now: Popular Reads
                 </h2>
-                <FeaturedBooks books={featuredBooks} />
+                <FeaturedBooks books={[]} />
             </section>
 
             {/* Feature Highlights Section */}
@@ -65,16 +64,16 @@ export default async function HomePage() {
                             title="For Our Members" 
                             features={["Advanced Search & Filters", "One-Click Book Reservation", "Personalized Profile & History"]}
                             ctaText="Start Browsing"
-                            ctaLink="/auth/login"
-                            isLibrarian={false}
+                            ctaLink='/login'
+                           
                         />
                         {/* Static component highlighting Librarian features */}
                         <FeatureHighlight 
                             title="For Our Librarians" 
-                            features={["Full CRUD for Books & Categories", "Inventory & Status Control", "Administrative User Blacklisting"]}
+                            features={["Dashboard", "Inventory & Status Control", "Administrative User Blacklisting"]}
                             ctaText="Go to Dashboard"
-                            ctaLink="/auth/login"
-                            isLibrarian={true}
+                            ctaLink="/login"
+                           
                         />
                     </div>
                 </div>

@@ -19,7 +19,7 @@ export const HeroSection = () => {
                 <Link href="/books" className="px-8 py-3 bg-indigo-700 text-white font-semibold rounded-lg shadow-lg hover:bg-indigo-800 transition duration-150">
                     Start Browsing Catalog
                 </Link>
-                <Link href="/signup" className="px-8 py-3 bg-transparent border-2 border-indigo-700 text-indigo-700 font-semibold rounded-lg hover:bg-indigo-50 transition duration-150">
+                <Link href="/auth/register" className="px-8 py-3 bg-transparent border-2 border-indigo-700 text-indigo-700 font-semibold rounded-lg hover:bg-indigo-50 transition duration-150">
                     Join the Community
                 </Link>
             </div>

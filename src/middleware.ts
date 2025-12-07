@@ -32,7 +32,7 @@ function matchesRoute(pathname: string, routes: string[]): boolean {
   });
 }
 
-// Helper function to decode JWT (simple base64 decode, no verification)
+//decode JWT 
 function decodeJWT(token: string): { role?: string } | null {
   try {
     const parts = token.split('.');
