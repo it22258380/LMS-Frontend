@@ -1,15 +1,17 @@
-import LoginForm from '../../../components/auth/LoginForm';
+'use client';
+
+import LoginForm from '../../components/auth/LoginForm';
 import { MenuBook as BookIcon } from '@mui/icons-material';
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-500 via-purple-500 to-pink-500 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 p-4">
       <div className="w-full max-w-md">
         {/* Card Container */}
         <div className="bg-white rounded-2xl shadow-2xl p-8">
           {/* Logo and Title */}
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-linear-to-br from-blue-500 to-purple-600 mb-4">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 mb-4">
               <BookIcon className="text-white text-3xl" />
             </div>
             

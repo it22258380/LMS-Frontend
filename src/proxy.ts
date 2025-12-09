@@ -32,7 +32,7 @@ function matchesRoute(pathname: string, routes: string[]): boolean {
   });
 }
 
-//decode JWT 
+// Decode JWT 
 function decodeJWT(token: string): { role?: string } | null {
   try {
     const parts = token.split('.');
@@ -46,10 +46,10 @@ function decodeJWT(token: string): { role?: string } | null {
   }
 }
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Skip middleware for static files and API routes
+  // Skip proxy for static files and API routes
   if (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api') ||
@@ -113,10 +113,9 @@ export function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 
-// Configure which paths the middleware runs on
+// Configure which paths the proxy runs on
 export const config = {
   matcher: [
-  
     '/((?!api|_next/static|_next/image|favicon.ico|.*\\..*|images).*)',
   ],
 };

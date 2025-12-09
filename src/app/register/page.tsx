@@ -1,6 +1,6 @@
 'use client';
 
-import RegisterForm from '../../../components/auth/RegisterForm';
+import RegisterForm from '../../components/auth/RegisterForm';
 import { MenuBook as BookIcon } from '@mui/icons-material';
 
 export default function RegisterPage() {

@@ -186,18 +186,6 @@ export default function LoginForm() {
         </p>
       </div>
 
-      {/* Demo Credentials (Optional - Remove in production) */}
-      <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-dashed border-gray-300">
-        <p className="text-xs text-gray-600 font-semibold mb-2">
-          Demo Credentials:
-        </p>
-        <p className="text-xs text-gray-500">
-          📚 Librarian: librarian@library.com / password123
-        </p>
-        <p className="text-xs text-gray-500">
-          👤 User: user@library.com / password123
-        </p>
-      </div>
     </form>
   );
 }
