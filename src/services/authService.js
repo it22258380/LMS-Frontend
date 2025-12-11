@@ -1,106 +1,147 @@
-import apiService from './api';
-import { LoginRequest, RegisterRequest, AuthResponse } from '../types/auth.types';
+import api from './api';
+import { ENDPOINTS, STORAGE_KEYS } from '../utils/constants';
+import { jwtDecode } from 'jwt-decode';
 
-export const authService = {
-  async login(credentials: LoginRequest): Promise<AuthResponse> {
-    const response = await apiService.post<AuthResponse>('/auth/login', credentials);
-    return response.data;
-  },
-
-  async register(data: RegisterRequest): Promise<AuthResponse> {
-    const response = await apiService.post<AuthResponse>('/auth/register', data);
-    return response.data;
-  },
-
-  async getCurrentUser(): Promise<AuthResponse['user']> {
-    const response = await apiService.get<AuthResponse['user']>('/auth/me');
-    return response.data;
-  },
-
-  logout(): void {
-    if (typeof window !== 'undefined') {
-      // Clear localStorage
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      
-      // Clear cookie
-      document.cookie = 'auth_token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+const authService = {
+  // Sign up new user
+  signup: async (userData) => {
+    try {
+      const response = await api.post(ENDPOINTS.SIGNUP, userData);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || 'Signup failed';
     }
   },
 
-  getStoredToken(): string | null {
-    if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('token');
-      // Check if token is valid (not 'undefined' or 'null' string)
-      if (token && token !== 'undefined' && token !== 'null') {
-        return token;
+  // Login user
+  login: async (credentials) => {
+    try {
+      const response = await api.post(ENDPOINTS.LOGIN, credentials);
+      console.log("LOGIN RESPONSE:", response.data);
+      const { accessToken } = response.data;
+      
+      // Store token
+      localStorage.setItem(STORAGE_KEYS.TOKEN, accessToken);
+      
+      // Decode JWT to inspect its contents
+      const decodedToken = jwtDecode(accessToken);
+      console.log('🔍 Full Decoded JWT Token:', decodedToken);
+      
+      // Try to extract role from different possible locations
+      let role = 'USER'; // Default role
+      
+      // Method 1: Check 'roles' claim (if backend is updated)
+      if (decodedToken.roles) {
+        role = decodedToken.roles.replace('ROLE_', '');
+        console.log('✅ Found role in "roles" claim:', role);
       }
-    }
-    return null;
-  },
-
-  getStoredUser(): AuthResponse['user'] | null {
-    if (typeof window !== 'undefined') {
-      const userStr = localStorage.getItem('user');
-      
-      // Check if userStr exists and is valid
-      if (userStr && userStr !== 'undefined' && userStr !== 'null') {
+      // Method 2: Check authorities array
+      else if (decodedToken.authorities) {
+        if (Array.isArray(decodedToken.authorities)) {
+          const authority = decodedToken.authorities[0];
+          if (typeof authority === 'string') {
+            role = authority.replace('ROLE_', '');
+          } else if (authority.authority) {
+            role = authority.authority.replace('ROLE_', '');
+          }
+        }
+        console.log('✅ Found role in "authorities":', role);
+      }
+      // Method 3: Fallback - Fetch user profile to get role
+      else {
+        console.log('⚠️ Role not in JWT, fetching from profile...');
         try {
-          const user = JSON.parse(userStr);
-          // Validate that parsed result is actually an object
-          if (user && typeof user === 'object') {
-            return user;
+          
+          const email = decodedToken.sub;
+          
+          
+          if (response.data.role) {
+            role = response.data.role;
+            console.log(' Found role in login response:', role);
+          } else {
+           
+            console.log('Could not determine role from JWT or response');
           }
         } catch (error) {
-          console.error('Error parsing stored user data:', error);
-          // Clean up corrupted data
-          localStorage.removeItem('user');
+          console.error('Failed to fetch user role:', error);
         }
+      }
+      
+      const userInfo = {
+        email: decodedToken.sub,
+        role: role
+      };
+      
+      console.log('💾 Storing user info:', userInfo);
+      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(userInfo));
+      
+      return { token: accessToken, user: userInfo };
+    } catch (error) {
+      throw error.response?.data || 'Login failed';
+    }
+  },
+
+  // Logout
+  logout: () => {
+    localStorage.removeItem(STORAGE_KEYS.TOKEN);
+    localStorage.removeItem(STORAGE_KEYS.USER);
+  },
+
+  // Get current user from localStorage
+  getCurrentUser: () => {
+    const userStr = localStorage.getItem(STORAGE_KEYS.USER);
+    if (userStr) {
+      try {
+        return JSON.parse(userStr);
+      } catch {
+        return null;
       }
     }
     return null;
   },
 
-  storeAuth(token: string, user: AuthResponse['user']): void {
-    if (typeof window !== 'undefined') {
-      // Validate inputs before storing
-      if (!token || !user) {
-        console.error('Invalid token or user data');
-        return;
-      }
+  // Get token
+  getToken: () => {
+    return localStorage.getItem(STORAGE_KEYS.TOKEN);
+  },
 
-      try {
-        // Store in localStorage
-        localStorage.setItem('token', token);
-        localStorage.setItem('user', JSON.stringify(user));
-        
-        // Also store token in cookie for middleware
-        // Cookie will expire in 7 days
-        const expiryDate = new Date();
-        expiryDate.setDate(expiryDate.getDate() + 7);
-        document.cookie = `auth_token=${token}; Path=/; Expires=${expiryDate.toUTCString()}; SameSite=Strict`;
-        
-        // Set token in API service
-        apiService.setToken(token);
-      } catch (error) {
-        console.error('Error storing auth data:', error);
-      }
+  // Check if user is authenticated
+  isAuthenticated: () => {
+    const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
+    if (!token) return false;
+    
+    try {
+      const decoded = jwtDecode(token);
+      // Check if token is expired
+      const currentTime = Date.now() / 1000;
+      return decoded.exp > currentTime;
+    } catch {
+      return false;
     }
   },
 
-  // Helper method to clear corrupted data
-  clearCorruptedData(): void {
-    if (typeof window !== 'undefined') {
-      const user = localStorage.getItem('user');
-      const token = localStorage.getItem('token');
+  // Get user role from token
+  getUserRole: () => {
+    const user = authService.getCurrentUser();
+    return user?.role || null;
+  },
 
-      // Check for corrupted data
-      if (user === 'undefined' || user === 'null') {
-        localStorage.removeItem('user');
+  // Helper function to detect role by testing LIBRARIAN-only endpoint
+  detectRoleByEndpoint: async () => {
+    try {
+      // Try to access a LIBRARIAN-only endpoint
+      await api.get('/api/categories');
+      // If successful, user is LIBRARIAN
+      return 'LIBRARIAN';
+    } catch (error) {
+      // If 403, user is USER
+      if (error.response && error.response.status === 403) {
+        return 'USER';
       }
-      if (token === 'undefined' || token === 'null') {
-        localStorage.removeItem('token');
-      }
+      // Otherwise, unknown error
+      return 'USER';
     }
   }
 };
+
+export default authService;
