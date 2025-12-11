@@ -3,7 +3,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import authService from '../services/authService';
 import { useRouter } from 'next/navigation';
-import { STORAGE_KEYS } from '../utils/constants';
 
 const AuthContext = createContext();
 
@@ -24,6 +23,7 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     try {
       const currentUser = authService.getCurrentUser();
+      console.log('📂 Loaded user from storage:', currentUser);
       setUser(currentUser);
     } catch (error) {
       console.error('Failed to load user:', error);
@@ -36,20 +36,10 @@ export const AuthProvider = ({ children }) => {
   const login = async (credentials) => {
     try {
       const result = await authService.login(credentials);
-      let finalUser = result.user;
+      const finalUser = result.user;
 
-      // If role is missing or default USER, detect role via endpoint
-      if (!finalUser.role || finalUser.role === 'USER') {
-        try {
-          const detectedRole = await authService.detectRoleByEndpoint();
-          finalUser = { ...finalUser, role: detectedRole };
-          localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(finalUser));
-          console.log('✅ Role detected:', detectedRole);
-        } catch {
-          console.log('⚠️ Role detection failed, using default USER');
-        }
-      }
-
+      console.log('✅ Login successful, user:', finalUser);
+      
       setUser(finalUser);
 
       // Redirect based on role
@@ -66,7 +56,7 @@ export const AuthProvider = ({ children }) => {
 
       return { success: true, user: finalUser };
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('❌ Login error:', error);
       return { success: false, error: error.message || 'Login failed' };
     }
   };
@@ -77,7 +67,7 @@ export const AuthProvider = ({ children }) => {
       await authService.signup(userData);
       return { success: true };
     } catch (error) {
-      console.error('Signup error:', error);
+      console.error('❌ Signup error:', error);
       return { success: false, error: error.message || 'Signup failed' };
     }
   };

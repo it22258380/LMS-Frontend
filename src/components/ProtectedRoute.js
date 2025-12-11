@@ -13,18 +13,26 @@ export default function ProtectedRoute({ children, allowedRoles = [] }) {
     if (!loading) {
       // Not authenticated
       if (!user) {
+        console.log('🚫 No user found, redirecting to login');
         router.push('/auth/login');
         return;
       }
 
+      console.log('👤 Current user:', user);
+      console.log('🔒 Allowed roles:', allowedRoles);
+
       // Check role authorization if roles are specified
       if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
+        console.log('⚠️ User role not authorized, redirecting...');
+        
         // Redirect to appropriate dashboard based on role
         if (user.role === 'LIBRARIAN') {
           router.push('/librarian/dashboard');
         } else {
           router.push('/user/dashboard');
         }
+      } else {
+        console.log('✅ User authorized for this route');
       }
     }
   }, [user, loading, allowedRoles, router]);
