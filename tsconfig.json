@@ -29,6 +29,6 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     "**/*.mts"
-, "src/app/user/dashboard/page.js", "src/app/user/profile/page.js", "src/app/user/books/[id]/page.js", "src/app/auth/signup/page.js", "src/app/auth/login/page.js", "src/services/authService.js", "src/contexts/AuthContext.js", "src/app/librarian/users/page.js", "src/app/page.js", "src/app/layout.js", "src/app/librarian/categories/page.js"  ],
+, "src/app/user/dashboard/page.js", "src/app/user/profile/page.js", "src/app/user/books/[id]/page.js", "src/app/auth/signup/page.js", "src/app/auth/login/page.js", "src/services/authService.js", "src/contexts/AuthContext.js", "src/app/librarian/users/page.js", "src/app/page.js", "src/app/layout.js", "src/app/librarian/categories/page.js", "src/config/themeConfig.js"  ],
   "exclude": ["node_modules"]
 }

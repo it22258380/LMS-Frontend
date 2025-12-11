@@ -17,25 +17,29 @@ const authService = {
   login: async (credentials) => {
     try {
       const response = await api.post(ENDPOINTS.LOGIN, credentials);
-      console.log("LOGIN RESPONSE:", response.data);
+      console.log('📥 LOGIN RESPONSE:', response.data);
+      
       const { accessToken } = response.data;
       
       // Store token
       localStorage.setItem(STORAGE_KEYS.TOKEN, accessToken);
       
-      // Decode JWT to inspect its contents
+      // Decode JWT to extract user info
       const decodedToken = jwtDecode(accessToken);
       console.log('🔍 Full Decoded JWT Token:', decodedToken);
       
-      // Try to extract role from different possible locations
+      // Try to extract role from different possible JWT claim locations
       let role = 'USER'; // Default role
       
-      // Method 1: Check 'roles' claim (if backend is updated)
-      if (decodedToken.roles) {
+      // Method 1: Check 'role' or 'roles' claim
+      if (decodedToken.role) {
+        role = decodedToken.role.replace('ROLE_', '');
+        console.log('✅ Found role in "role" claim:', role);
+      } else if (decodedToken.roles) {
         role = decodedToken.roles.replace('ROLE_', '');
         console.log('✅ Found role in "roles" claim:', role);
       }
-      // Method 2: Check authorities array
+      // Method 2: Check 'authorities' array
       else if (decodedToken.authorities) {
         if (Array.isArray(decodedToken.authorities)) {
           const authority = decodedToken.authorities[0];
@@ -47,26 +51,17 @@ const authService = {
         }
         console.log('✅ Found role in "authorities":', role);
       }
-      // Method 3: Fallback - Fetch user profile to get role
+      // Method 3: Check if role is in the response body
+      else if (response.data.role) {
+        role = response.data.role.replace('ROLE_', '');
+        console.log('✅ Found role in login response body:', role);
+      }
+      // Method 4: Last fallback - default to USER
       else {
-        console.log('⚠️ Role not in JWT, fetching from profile...');
-        try {
-          
-          const email = decodedToken.sub;
-          
-          
-          if (response.data.role) {
-            role = response.data.role;
-            console.log(' Found role in login response:', role);
-          } else {
-           
-            console.log('Could not determine role from JWT or response');
-          }
-        } catch (error) {
-          console.error('Failed to fetch user role:', error);
-        }
+        console.log('⚠️ Could not determine role from JWT or response, defaulting to USER');
       }
       
+      // Create user info object
       const userInfo = {
         email: decodedToken.sub,
         role: role
@@ -77,6 +72,7 @@ const authService = {
       
       return { token: accessToken, user: userInfo };
     } catch (error) {
+      console.error('❌ Login error:', error);
       throw error.response?.data || 'Login failed';
     }
   },
@@ -85,6 +81,7 @@ const authService = {
   logout: () => {
     localStorage.removeItem(STORAGE_KEYS.TOKEN);
     localStorage.removeItem(STORAGE_KEYS.USER);
+    console.log('👋 User logged out');
   },
 
   // Get current user from localStorage
@@ -93,7 +90,8 @@ const authService = {
     if (userStr) {
       try {
         return JSON.parse(userStr);
-      } catch {
+      } catch (error) {
+        console.error('Failed to parse user from localStorage:', error);
         return null;
       }
     }
@@ -115,7 +113,8 @@ const authService = {
       // Check if token is expired
       const currentTime = Date.now() / 1000;
       return decoded.exp > currentTime;
-    } catch {
+    } catch (error) {
+      console.error('Failed to decode token:', error);
       return false;
     }
   },
@@ -124,23 +123,6 @@ const authService = {
   getUserRole: () => {
     const user = authService.getCurrentUser();
     return user?.role || null;
-  },
-
-  // Helper function to detect role by testing LIBRARIAN-only endpoint
-  detectRoleByEndpoint: async () => {
-    try {
-      // Try to access a LIBRARIAN-only endpoint
-      await api.get('/api/categories');
-      // If successful, user is LIBRARIAN
-      return 'LIBRARIAN';
-    } catch (error) {
-      // If 403, user is USER
-      if (error.response && error.response.status === 403) {
-        return 'USER';
-      }
-      // Otherwise, unknown error
-      return 'USER';
-    }
   }
 };
 

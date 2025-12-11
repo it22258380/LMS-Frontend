@@ -48,9 +48,6 @@ function BookDetailsContent() {
     setMessage({ type: '', text: '' });
 
     try {
-      // Get user ID from email (you might need to adjust this based on your backend)
-      // For now, we'll need to fetch user profile to get the ID
-      // This is a simplified version - you may need to store user ID in context
       
       await reservationService.createReservation(user.id, book.id);
       
